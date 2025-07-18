@@ -86,7 +86,7 @@ async def note_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     await update.message.reply_text(f"Got it! I’ve saved your note: “{note}”")
 
-<INSERTED CODE FROM PREVIOUS STEP (FORWARDER LOGIC)>
+
 
 
 from apscheduler.jobstores.base import JobLookupError
