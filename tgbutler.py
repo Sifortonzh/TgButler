@@ -65,6 +65,19 @@ async def set_model(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text("I only support `openai` and `deepseek` for now.")
 
+# ---------------------- Improved AI Summary Function ----------------------
+async def ai_summarize(text: str) -> str:
+    summary_prompt = (
+        "Summarize the following message in one sentence. "
+        "Be concise, objective, and professional.\n"
+        f"Message: {text}"
+    )
+    try:
+        summary = await ask_ai(summary_prompt)
+        return summary.strip()
+    except Exception as e:
+        return f"[AI Summary Failed] Raw message:\n{text}"
+
 # ---------------------- /note 笔记 ----------------------
 async def note_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     note = " ".join(context.args)
@@ -73,20 +86,71 @@ async def note_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     await update.message.reply_text(f"Got it! I’ve saved your note: “{note}”")
 
-# ---------------------- /remind 提醒（占位） ----------------------
-async def remind_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("⏰ Reminder system coming soon. I’m still learning how to set timers.")
+<INSERTED CODE FROM PREVIOUS STEP (FORWARDER LOGIC)>
+
+
+from apscheduler.jobstores.base import JobLookupError
+
+# ---------------------- /remindlist 查看所有提醒 ----------------------
+async def remind_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    jobs = scheduler.get_jobs()
+    if not jobs:
+        await update.message.reply_text("🔕 当前没有待执行的提醒。")
+        return
+    message_lines = []
+    for i, job in enumerate(jobs, 1):
+        run_time = job.next_run_time.strftime("%Y-%m-%d %H:%M")
+        message_lines.append(f"{i}. ⏰ {run_time} - {job.name}")
+    await update.message.reply_text("\n".join(message_lines))
+
+# ---------------------- /cancelremind <任务序号> ----------------------
+async def cancel_remind(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    jobs = scheduler.get_jobs()
+    if not context.args or not context.args[0].isdigit():
+        await update.message.reply_text("用法：/cancelremind <任务编号> （用 /remindlist 查看）")
+        return
+    index = int(context.args[0]) - 1
+    if index < 0 or index >= len(jobs):
+        await update.message.reply_text("❌ 提醒编号无效。")
+        return
+    try:
+        jobs[index].remove()
+        await update.message.reply_text(f"✅ 已取消提醒：{jobs[index].name}")
+    except JobLookupError:
+        await update.message.reply_text("⚠️ 无法取消，提醒可能已执行。")
+
+
+
+# ---------------------- 自动欢迎新成员 ----------------------
+async def welcome_new_members(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    for member in update.message.new_chat_members:
+        name = member.full_name
+        welcome_text = (
+            f"""Hi {name} 👋\n"
+            "I'm *AVECROUGE* — your AI assistant here to help, remind, and chat.\n"
+            "Type /help to get started 🧠"""
+        )
+        await update.message.reply_text(welcome_text, parse_mode="Markdown")
+
 
 # ---------------------- 群关键词监听 ----------------------
 async def keyword_listener(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
-    if any(keyword.lower() in text.lower() for keyword in KEYWORDS):
-        await context.bot.send_message(
-            chat_id=OWNER_ID, 
-            text=f"""🔔 Keyword alert in group:
+    chat = update.effective_chat
 
-{text}"""
-)
+    if any(keyword.lower() in text.lower() for keyword in KEYWORDS):
+        summary = await ai_summarize(text)
+        forward_text = (
+            f"📩 *New Message with AI Summary*\n\n"
+            f"{chat.title if chat.title else '👤 Private Chat'}\n"
+            f"👤 From: `{update.effective_user.full_name}` (`{update.effective_user.id}`)\n\n"
+            f"📝 Summary:\n{summary}"
+        )
+        await context.bot.send_message(
+            chat_id=OWNER_ID,
+            text=forward_text,
+            parse_mode="Markdown"
+        )
 
 # ---------------------- 启动入口 ----------------------
 if __name__ == "__main__":
