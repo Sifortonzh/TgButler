@@ -3,6 +3,21 @@ import logging
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 
+# 保活用的轻量 HTTP Server
+from flask import Flask
+import threading
+
+# 启动一个简单 Flask 应用（给 UptimeRobot 访问）
+flask_app = Flask(__name__)
+
+@flask_app.route('/')
+def home():
+    return 'TgButler is alive 💡'
+
+def run_flask():
+    flask_app.run(host='0.0.0.0', port=8080)
+
+
 # ---------------------- 配置区域 ----------------------
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 OWNER_ID = int(os.getenv("OWNER_ID"))  # 必填
@@ -86,11 +101,6 @@ async def note_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     await update.message.reply_text(f"Got it! I’ve saved your note: “{note}”")
 
-
-
-
-from apscheduler.jobstores.base import JobLookupError
-
 # ---------------------- /remindlist 查看所有提醒 ----------------------
 async def remind_list(update: Update, context: ContextTypes.DEFAULT_TYPE):
     jobs = scheduler.get_jobs()
@@ -154,6 +164,8 @@ async def keyword_listener(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # ---------------------- 启动入口 ----------------------
 if __name__ == "__main__":
+    # 启动保活 Flask 线程（防 Railway 休眠）
+    threading.Thread(target=run_flask).start()
     app = ApplicationBuilder().token(BOT_TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))

@@ -70,6 +70,30 @@ python tgbutler.py
 
 ---
 
+### 3. Prevent Railway from Sleeping (UptimeRobot)
+
+By default, Railway will put your service to sleep if there's no incoming HTTP request for 10 minutes.  
+To keep your bot alive (especially when using `run_polling()`), add a tiny Flask server:
+
+```python
+from flask import Flask
+import threading
+
+flask_app = Flask(__name__)
+
+@flask_app.route('/')
+def home():
+    return 'TgButler is alive 💡'
+
+def run_flask():
+    flask_app.run(host='0.0.0.0', port=8080)
+
+# Start the Flask server in background
+threading.Thread(target=run_flask).start()
+```
+
+---
+
 ## 📎 Screenshots
 
 
