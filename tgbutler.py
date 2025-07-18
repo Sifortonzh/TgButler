@@ -25,19 +25,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Hi there 👋 I'm TgButler, your personal assistant bot. Use /help to see what I can do.")
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    help_text = (
-        "Here’s what I can do for you:
+    help_text = """Here’s what I can do for you:
 
-"
-        "/chat <message> — Chat with AI 🤖
-"
-        "/note <text> — Save a quick note 📝
-"
-        "/remind <time> <task> — Set a reminder ⏰
-"
-        "/setmodel <deepseek|openai> — Switch AI model ⚙️
-"
-    )
+/chat <message> — Chat with AI 🤖
+/note <text> — Save a quick note 📝
+/remind <time> <task> — Set a reminder ⏰
+/setmodel <deepseek|openai> — Switch AI model ⚙️
+"""
     await update.message.reply_text(help_text)
 
 # ---------------------- /chat 聊天 ----------------------
