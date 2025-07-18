@@ -81,9 +81,12 @@ async def remind_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def keyword_listener(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     if any(keyword.lower() in text.lower() for keyword in KEYWORDS):
-        await context.bot.send_message(chat_id=OWNER_ID, text=f"🔔 Keyword alert in group:
+        await context.bot.send_message(
+            chat_id=OWNER_ID, 
+            text=f"""🔔 Keyword alert in group:
 
-{text}")
+{text}"""
+)
 
 # ---------------------- 启动入口 ----------------------
 if __name__ == "__main__":
