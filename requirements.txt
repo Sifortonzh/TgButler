@@ -1,3 +1,4 @@
 python-telegram-bot==20.6
 aiohttp
 flask>=2.0.0
+apscheduler>=3.10.4
