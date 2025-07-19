@@ -14,33 +14,33 @@ Built with ✨ `python-telegram-bot`, OpenAI/DeepSeek models, and `apscheduler`.
 | `/help` | Show all available commands |
 | `/chat <message>` | Chat with AI (OpenAI or DeepSeek) |
 | `/note <text>` | Save quick notes |
-| `/remind <time> <text>` | Set reminders (supports `in 10m`, `23:30`, full date) |
-| `/remindlist` | View pending reminders |
+| `/remind <time> <task>` | Set reminders (`in 10m`, `23:30`, full date) |
+| `/remindlist` | View all active reminders |
 | `/cancelremind <index>` | Cancel a specific reminder |
 | `/setmodel openai|deepseek` | Switch the AI backend |
 | `/reply <user_id> <message>` | Send a reply to any forwarded user |
 | 🔁 **Passive Features** | |
 | ✉️ Message forwarding to bot owner | With AI-generated summary |
-| 🔔 Keyword detection in groups | Notifies owner if “Netflix”, “YouTube”, etc. are mentioned |
-| 🙋 Auto-welcome | New group members get a friendly welcome message |
+| 🧠 AI Summary | Auto summary via English prompt |
+| 🔔 Keyword detection in groups | Alerts owner if keywords like “Netflix” appear |
+| 🙋 Auto-welcome | Friendly message for new group members |
+| ♻️ Railway uptime keep-alive | Optional Flask route for UptimeRobot |
 
 ---
 
 ## 🧠 AI Summary
 
-Every forwarded message includes an **AI-generated summary** (via OpenAI or DeepSeek).  
+All forwarded messages include an AI summary using OpenAI/DeepSeek.  
 Prompt used:
 
 ```
-"Summarize the following message in one sentence. 
-Be concise, objective, and professional."
+Summarize the following message in one sentence.
+Be concise, objective, and professional.
 ```
 
 ---
 
 ## ⚙️ Environment Variables
-
-You need to set the following environment variables in your `.env` file or in Railway/Render UI:
 
 ```env
 BOT_TOKEN=your_botfather_token
@@ -61,19 +61,18 @@ pip install -r requirements.txt
 python tgbutler.py
 ```
 
-### 2. Railway / Render (Recommended)
+### 2. Railway / Render
 
-- Connect GitHub repository
-- Set environment variables
+- Connect your GitHub repo
+- Add required environment variables
 - **Start Command**: `python tgbutler.py`
-- Optional: add `PYTHON_VERSION=3.11.9`
+- Add: `PYTHON_VERSION = 3.11.9`
 
 ---
 
-### 3. Prevent Railway from Sleeping (UptimeRobot)
+### ♻️ Prevent Railway from Sleeping (UptimeRobot)
 
-By default, Railway will put your service to sleep if there's no incoming HTTP request for 10 minutes.  
-To keep your bot alive (especially when using `run_polling()`), add a tiny Flask server:
+Add this Flask route:
 
 ```python
 from flask import Flask
@@ -88,22 +87,12 @@ def home():
 def run_flask():
     flask_app.run(host='0.0.0.0', port=8080)
 
-# Start the Flask server in background
+# Start the server
 threading.Thread(target=run_flask).start()
 ```
 
----
-
-## 📎 Screenshots
-
-
-
----
-
-## 💡 Inspiration
-
-Slack’s tone. Your personal AI secretary. A hands-off message monitor.  
-TgButler is designed to **“do things you don’t want to do manually”** — but with style.
+Register the resulting Railway URL (e.g. `https://yourapp.up.railway.app/`)  
+with [UptimeRobot](https://uptimerobot.com) to ping it every 5 minutes.
 
 ---
 

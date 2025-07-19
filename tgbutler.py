@@ -1,3 +1,68 @@
+
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.date import DateTrigger
+from apscheduler.jobstores.base import JobLookupError
+import re
+from datetime import datetime, timedelta
+
+scheduler = AsyncIOScheduler()
+scheduler.start()
+
+async def remind_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        await update.message.reply_text("用法示例：\n/remind 22:30 洗澡\n/remind in 10m 开会")
+        return
+
+    text = " ".join(context.args)
+    chat_id = update.effective_chat.id
+
+    try:
+        if text.lower().startswith("in "):
+            offset_match = re.match(r"in\s+(\d+)([hm])(?:\s*(\d+)?([hm])?)?\s+(.*)", text, re.IGNORECASE)
+            if offset_match:
+                amount1, unit1, amount2, unit2, task = offset_match.groups()
+                delta = timedelta()
+                if unit1 == "h":
+                    delta += timedelta(hours=int(amount1))
+                else:
+                    delta += timedelta(minutes=int(amount1))
+                if amount2 and unit2:
+                    if unit2 == "h":
+                        delta += timedelta(hours=int(amount2))
+                    else:
+                        delta += timedelta(minutes=int(amount2))
+                remind_time = datetime.now() + delta
+            else:
+                await update.message.reply_text("格式错误，用法：in 10m 吃饭 / in 2h30m 开会")
+                return
+        elif re.match(r"^\d{1,2}:\d{2}", text):
+            parts = text.split(" ", 1)
+            remind_time = datetime.combine(datetime.today(), datetime.strptime(parts[0], "%H:%M").time())
+            task = parts[1] if len(parts) > 1 else "提醒事项"
+            if remind_time < datetime.now():
+                remind_time += timedelta(days=1)
+        elif re.match(r"^\d{4}-\d{2}-\d{2}\s+\d{1,2}:\d{2}", text):
+            parts = text.split(" ", 2)
+            remind_time = datetime.strptime(f"{parts[0]} {parts[1]}", "%Y-%m-%d %H:%M")
+            task = parts[2] if len(parts) > 2 else "提醒事项"
+        else:
+            await update.message.reply_text("无法识别时间格式，用法：\n/remind in 10m 喝水\n/remind 23:00 睡觉")
+            return
+
+        scheduler.add_job(
+            send_reminder,
+            trigger=DateTrigger(run_date=remind_time),
+            args=[context, chat_id, task]
+        )
+        await update.message.reply_text(f"✅ 已设置提醒：{remind_time.strftime('%Y-%m-%d %H:%M')} → {task}")
+
+    except Exception as e:
+        await update.message.reply_text(f"❌ 设置失败：{e}")
+
+async def send_reminder(context: ContextTypes.DEFAULT_TYPE, chat_id: int, task: str):
+    await context.bot.send_message(chat_id=chat_id, text=f"🔔 提醒时间到啦：{task}")
+
+
 import os
 import logging
 from telegram import Update
